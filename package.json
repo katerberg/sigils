@@ -1,0 +1,42 @@
+{
+  "name": "sigils",
+  "version": "0.0.0",
+  "description": "HTML Mobile game about drawing squiggles",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "mkdir -p dist && cp -r src/images/ dist/images/",
+    "build": "webpack --config ./webpack.config.js --mode production",
+    "start": "webpack-dev-server --config ./webpack.config.js --mode development",
+    "lint": "npm run lint:base -- --fix",
+    "lint:ci": "npm run lint:base",
+    "lint:base": "eslint --ext js,ts src"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "@webpack-cli/generators": "^3.0.1",
+    "autoprefixer": "^10.4.13",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.7.3",
+    "eslint": "^8.30.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.7.2",
+    "postcss-loader": "^7.0.2",
+    "sass": "^1.57.1",
+    "sass-loader": "^13.2.0",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.4",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
+  },
+  "author": "katerberg@fastmail.fm",
+  "license": "AGPL-3.0-or-later"
+}
