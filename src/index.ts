@@ -46,10 +46,6 @@ function setupDrawListeners(): void {
   function onMouseDown(event: paper.MouseEvent): void {
     path = new paper.Path();
     path.strokeColor = new paper.Color('black');
-    console.log(`hsl(${Math.floor(Math.random() * 360)}deg, 100%, 100%)`);
-    // path.fillColor = new paper.Color('purple');
-    console.log(path.fillColor);
-
     path.add(event.point);
   }
 
