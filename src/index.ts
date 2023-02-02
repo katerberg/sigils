@@ -19,6 +19,7 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function drawSpinningRectangle(): void {
   const rectangle = new paper.Path.Rectangle([75, 75], [100, 100]);
   rectangle.strokeColor = new paper.Color('black');
@@ -44,6 +45,7 @@ function setupDrawListeners(): void {
   let path = new paper.Path();
 
   function onMouseDown(event: paper.MouseEvent): void {
+    path.remove();
     path = new paper.Path();
     path.strokeColor = new paper.Color('black');
     path.strokeWidth = 20;
@@ -59,6 +61,7 @@ function setupDrawListeners(): void {
     path.add(event.point);
     path.smooth();
   }
+
   tool.onMouseDown = onMouseDown;
   tool.onMouseUp = onMouseUp;
   tool.onMouseDrag = onMouseDrag;
@@ -86,7 +89,6 @@ window.addEventListener('load', () => {
     // Create an empty project and a view for the canvas:
     paper.setup(globalThis.gameElement);
 
-    drawSpinningRectangle();
     drawSigilToTrace();
     setupDrawListeners();
   }
