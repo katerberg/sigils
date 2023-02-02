@@ -62,9 +62,27 @@ function setupDrawListeners(): void {
   tool.onMouseUp = onMouseUp;
   tool.onMouseDrag = onMouseDrag;
 }
+function drawCircle(x: number, y: number): void {
+  const circle = new paper.Path.Circle({
+    center: {x, y},
+    radius: 5,
+  });
+  circle.fillColor = new paper.Color('black');
+}
 
 function drawSigilToTrace(): void {
+  const {width, height} = globalThis.gameElement.getBoundingClientRect();
   const path = new paper.Path();
+  path.strokeColor = new paper.Color(0, 0, 0, 0.2);
+  path.strokeWidth = 20;
+  path.add({x: width * 0.1, y: height * 0.1});
+  drawCircle(width * 0.1, height * 0.1);
+  path.add({x: width * 0.45 - 20, y: height * 0.8});
+  drawCircle(width * 0.45 - 20, height * 0.8);
+  path.add({x: width * 0.45 + 20, y: height * 0.8});
+  drawCircle(width * 0.45 + 20, height * 0.8);
+  path.add({x: width * 0.9, y: height * 0.1});
+  drawCircle(width * 0.9, height * 0.1);
 }
 
 window.addEventListener('load', () => {
