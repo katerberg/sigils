@@ -1,6 +1,5 @@
 import './index.scss';
 import * as paper from 'paper';
-import {drawSomeText} from './utils';
 
 screen.orientation?.lock?.('portrait');
 
@@ -20,32 +19,72 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
+function drawSpinningRectangle(): void {
+  const rectangle = new paper.Path.Rectangle([75, 75], [100, 100]);
+  rectangle.strokeColor = new paper.Color('black');
+  rectangle.fillColor = new paper.Color('red');
+
+  paper.view.onFrame = (e: OnFrameEvent): void => {
+    // On each frame, rotate the path by 3 degrees:
+    if (e.count % 2 === 0) {
+      rectangle.rotate(3);
+      rectangle.opacity = ((rectangle.opacity * 100 + 1) % 100) / 100;
+      if (rectangle.fillColor) {
+        rectangle.fillColor.hue += 1;
+      }
+    }
+  };
+}
+
+function setupDrawListeners(): void {
+  const tool = new paper.Tool();
+  // tool.minDistance = 10;
+  // tool.maxDistance = 45;
+
+  let path = new paper.Path();
+
+  function onMouseDown(event: paper.MouseEvent): void {
+    path = new paper.Path();
+    path.strokeColor = new paper.Color('black');
+    console.log(`hsl(${Math.floor(Math.random() * 360)}deg, 100%, 100%)`);
+    // path.fillColor = new paper.Color('purple');
+    console.log(path.fillColor);
+
+    path.add(event.point);
+  }
+
+  function onMouseDrag(event: paper.MouseEvent): void {
+    path.add(event.point);
+    path.smooth();
+  }
+
+  function onMouseUp(event: paper.MouseEvent): void {
+    path.add(event.point);
+    path.smooth();
+  }
+  tool.onMouseDown = onMouseDown;
+  tool.onMouseUp = onMouseUp;
+  tool.onMouseDrag = onMouseDrag;
+}
+
+function drawSigilToTrace(): void {
+  const path = new paper.Path();
+}
+
 window.addEventListener('load', () => {
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
   if (gameElement) {
-    initCanvasSize(gameElement);
-
-    // Create an empty project and a view for the canvas:
-    paper.setup(gameElement);
-
-    const rectangle = new paper.Path.Rectangle([75, 75], [100, 100]);
-    rectangle.strokeColor = new paper.Color('black');
-    rectangle.fillColor = new paper.Color('red');
-
-    paper.view.onFrame = (e: OnFrameEvent): void => {
-      // On each frame, rotate the path by 3 degrees:
-      if (e.count % 2 === 0) {
-        rectangle.rotate(3);
-        rectangle.opacity = ((rectangle.opacity * 100 + 1) % 100) / 100;
-        if (rectangle.fillColor) {
-          rectangle.fillColor.hue += 1;
-        }
-      }
-    };
-
-    drawSomeText('Sigils', undefined, undefined, {textAlign: 'center'});
     gameElement.onwheel = (event): void => {
       event.preventDefault();
     };
+
+    initCanvasSize(gameElement);
+
+    // Create an empty project and a view for the canvas:
+    paper.setup(globalThis.gameElement);
+
+    drawSpinningRectangle();
+    drawSigilToTrace();
+    setupDrawListeners();
   }
 });

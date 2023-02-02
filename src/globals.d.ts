@@ -2,5 +2,5 @@
 export {};
 
 declare global {
-  var gameElement: HTMLElement;
+  var gameElement: HTMLCanvasElement;
 }
