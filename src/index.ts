@@ -9,6 +9,8 @@ type OnFrameEvent = {
   count: number;
 };
 
+let currentSigil: paper.Path;
+
 function initCanvasSize(canvas: HTMLCanvasElement): void {
   const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
   const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
@@ -37,6 +39,12 @@ function drawSpinningRectangle(): void {
   };
 }
 
+function drawScore(drawnPath: paper.Path): void {
+  console.log(drawnPath.getIntersections(currentSigil));
+  const subtracted = currentSigil.subtract(drawnPath, {insert: false}) as paper.Path;
+  console.log(subtracted.area);
+}
+
 function setupDrawListeners(): void {
   const tool = new paper.Tool();
   // tool.minDistance = 10;
@@ -47,19 +55,38 @@ function setupDrawListeners(): void {
   function onMouseDown(event: paper.MouseEvent): void {
     path.remove();
     path = new paper.Path();
-    path.strokeColor = new paper.Color('black');
-    path.strokeWidth = 20;
+    // path.strokeColor = new paper.Color('black');
+    // path.strokeWidth = 20;
+    path.fillColor = new paper.Color('orange');
     path.add(event.point);
   }
 
   function onMouseDrag(event: paper.MouseEvent): void {
-    path.add(event.point);
+    // path.add(event.point);
+    const step = event.delta.clone();
+    step.x /= 2;
+    step.y /= 2;
+    step.angle += 90;
+    // const step = {x: event.delta.x / 2, y: event.delta.y / 2};
+
+    const top = event.point.clone();
+    top.x += step.x;
+    top.y += step.y;
+    const bottom = event.point.clone();
+    bottom.x -= step.x;
+    bottom.y -= step.y;
+    // const top = event.middlePoint + step;
+    // const bottom = event.middlePoint - step;
+
+    path.add(top);
+    path.insert(0, bottom);
     path.smooth();
   }
 
   function onMouseUp(event: paper.MouseEvent): void {
     path.add(event.point);
     path.smooth();
+    drawScore(path);
   }
 
   tool.onMouseDown = onMouseDown;
@@ -69,12 +96,30 @@ function setupDrawListeners(): void {
 
 function drawSigilToTrace(): void {
   const {width, height} = globalThis.gameElement.getBoundingClientRect();
-  const path = new paper.Path();
-  path.strokeColor = new paper.Color(0, 0, 0, 0.2);
-  path.strokeWidth = 20;
-  path.add(new paper.Segment({x: width * 0.1, y: height * 0.1}, undefined, {x: width * 0.4, y: height * 1.7}));
-  path.add(new paper.Segment({x: width * 0.9, y: height * 0.1}, undefined, {x: width * -0.4, y: height * 1.7}));
-  path.smooth();
+  const outerPath = new paper.Path();
+  outerPath.strokeColor = new paper.Color(0, 0, 0, 1);
+  outerPath.fillColor = new paper.Color(0, 0, 0, 0.2);
+
+  const topOuterLeftPoint = {x: width * 0.1, y: height * 0.1};
+  const topOuterRightPoint = {x: width * 0.9, y: height * 0.1};
+  outerPath.add(new paper.Segment(topOuterLeftPoint, undefined, {x: width * 0.4, y: height * 1.7}));
+  outerPath.add(new paper.Segment(topOuterRightPoint, undefined, {x: width * -0.4, y: height * 1.7}));
+
+  outerPath.smooth();
+
+  const innerPath = outerPath.clone();
+  innerPath.segments[0].point.x += 20;
+  innerPath.segments[0].handleOut.x -= 20;
+  innerPath.segments[0].handleOut.y -= 40;
+  innerPath.segments[1].point.x -= 20;
+  innerPath.segments[1].handleOut.y -= 40;
+  innerPath.smooth();
+
+  const arch = outerPath.subtract(innerPath);
+  innerPath.remove();
+  outerPath.remove();
+
+  currentSigil = arch as paper.Path;
 }
 
 window.addEventListener('load', () => {
