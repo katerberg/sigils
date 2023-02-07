@@ -1,5 +1,6 @@
 import './index.scss';
 import * as paper from 'paper';
+import DollarRecognizer from './lib/dollar';
 
 screen.orientation?.lock?.('portrait');
 
@@ -9,7 +10,8 @@ type OnFrameEvent = {
   count: number;
 };
 
-let currentSigil: paper.Path;
+// let currentSigil: paper.Path;
+let guessText: paper.PointText;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
   const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -39,54 +41,49 @@ function drawSpinningRectangle(): void {
   };
 }
 
-function drawScore(drawnPath: paper.Path): void {
-  console.log(drawnPath.getIntersections(currentSigil));
-  const subtracted = currentSigil.subtract(drawnPath, {insert: false}) as paper.Path;
-  console.log(subtracted.area);
+function getDollarRecognized(linePath: paper.Path): void {
+  const recognizer = new DollarRecognizer();
+
+  const recognizeResult = recognizer.Recognize(
+    linePath.segments.map((s) => ({X: s.point.x, Y: s.point.y})),
+    true,
+  );
+  guessText?.remove();
+  guessText = new paper.PointText({
+    point: paper.view.center.transform(new paper.Matrix().translate(0, -330)),
+    justification: 'center',
+    fontSize: 30,
+    fillColor: 'black',
+  });
+  guessText.content = `
+  Guess: ${recognizeResult.Name}
+  Chance: ${Math.floor(recognizeResult.Score * 1000) / 10}%
+  `;
 }
 
 function setupDrawListeners(): void {
   const tool = new paper.Tool();
-  // tool.minDistance = 10;
-  // tool.maxDistance = 45;
+  tool.minDistance = 10;
+  tool.maxDistance = 10;
 
-  let path = new paper.Path();
+  let linePath = new paper.Path();
 
   function onMouseDown(event: paper.MouseEvent): void {
-    path.remove();
-    path = new paper.Path();
-    // path.strokeColor = new paper.Color('black');
-    // path.strokeWidth = 20;
-    path.fillColor = new paper.Color('orange');
-    path.add(event.point);
+    linePath?.remove();
+    linePath = new paper.Path({insert: true});
+    linePath.strokeColor = new paper.Color('black');
+    linePath.strokeWidth = 7;
+    linePath.add(event.point);
   }
 
   function onMouseDrag(event: paper.MouseEvent): void {
-    // path.add(event.point);
-    const step = event.delta.clone();
-    step.x /= 2;
-    step.y /= 2;
-    step.angle += 90;
-    // const step = {x: event.delta.x / 2, y: event.delta.y / 2};
-
-    const top = event.point.clone();
-    top.x += step.x;
-    top.y += step.y;
-    const bottom = event.point.clone();
-    bottom.x -= step.x;
-    bottom.y -= step.y;
-    // const top = event.middlePoint + step;
-    // const bottom = event.middlePoint - step;
-
-    path.add(top);
-    path.insert(0, bottom);
-    path.smooth();
+    linePath.add(event.point);
   }
 
   function onMouseUp(event: paper.MouseEvent): void {
-    path.add(event.point);
-    path.smooth();
-    drawScore(path);
+    linePath.add(event.point);
+    linePath.simplify();
+    getDollarRecognized(linePath);
   }
 
   tool.onMouseDown = onMouseDown;
@@ -94,33 +91,34 @@ function setupDrawListeners(): void {
   tool.onMouseDrag = onMouseDrag;
 }
 
-function drawSigilToTrace(): void {
-  const {width, height} = globalThis.gameElement.getBoundingClientRect();
-  const outerPath = new paper.Path();
-  outerPath.strokeColor = new paper.Color(0, 0, 0, 1);
-  outerPath.fillColor = new paper.Color(0, 0, 0, 0.2);
+// function drawSigilToTrace(): void {
+//   const {width, height} = globalThis.gameElement.getBoundingClientRect();
+//   const outerPath = new paper.Path();
+//   outerPath.strokeColor = new paper.Color(0, 0, 0, 1);
+//   outerPath.fillColor = new paper.Color(0, 0, 0, 0.2);
 
-  const topOuterLeftPoint = {x: width * 0.1, y: height * 0.1};
-  const topOuterRightPoint = {x: width * 0.9, y: height * 0.1};
-  outerPath.add(new paper.Segment(topOuterLeftPoint, undefined, {x: width * 0.4, y: height * 1.7}));
-  outerPath.add(new paper.Segment(topOuterRightPoint, undefined, {x: width * -0.4, y: height * 1.7}));
+//   const topOuterLeftPoint = {x: width * 0.1, y: height * 0.1};
+//   const topOuterRightPoint = {x: width * 0.9, y: height * 0.1};
+//   outerPath.add(new paper.Segment(topOuterLeftPoint, undefined, {x: width * 0.4, y: height * 1.7}));
+//   outerPath.add(new paper.Segment(topOuterRightPoint, undefined, {x: width * -0.4, y: height * 1.7}));
 
-  outerPath.smooth();
+//   outerPath.smooth();
 
-  const innerPath = outerPath.clone();
-  innerPath.segments[0].point.x += 20;
-  innerPath.segments[0].handleOut.x -= 20;
-  innerPath.segments[0].handleOut.y -= 40;
-  innerPath.segments[1].point.x -= 20;
-  innerPath.segments[1].handleOut.y -= 40;
-  innerPath.smooth();
+//   const sigilLegWidth = 40;
+//   const innerPath = outerPath.clone();
+//   innerPath.segments[0].point.x += sigilLegWidth;
+//   innerPath.segments[0].handleOut.x -= sigilLegWidth;
+//   innerPath.segments[0].handleOut.y -= sigilLegWidth * 2;
+//   innerPath.segments[1].point.x -= sigilLegWidth;
+//   innerPath.segments[1].handleOut.y -= sigilLegWidth * 2;
+//   innerPath.smooth();
 
-  const arch = outerPath.subtract(innerPath);
-  innerPath.remove();
-  outerPath.remove();
+//   const arch = outerPath.subtract(innerPath);
+//   innerPath.remove();
+//   outerPath.remove();
 
-  currentSigil = arch as paper.Path;
-}
+//   currentSigil = arch as paper.Path;
+// }
 
 window.addEventListener('load', () => {
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -131,10 +129,9 @@ window.addEventListener('load', () => {
 
     initCanvasSize(gameElement);
 
-    // Create an empty project and a view for the canvas:
     paper.setup(globalThis.gameElement);
 
-    drawSigilToTrace();
+    // drawSigilToTrace();
     setupDrawListeners();
   }
 });

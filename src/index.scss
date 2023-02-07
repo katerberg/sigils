@@ -14,14 +14,14 @@ body {
   -ms-user-select: none; /* Internet Explorer/Edge */
   user-select: none;
   touch-action: manipulation;
-  background: 'black';
+  background: black;
 }
 
 canvas {
   /* Set up proportionate scaling */
   width: 100%;
   height: auto;
-  background: 'white';
+  background: white;
 }
 
 .image-lock {
