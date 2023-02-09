@@ -165,10 +165,9 @@ function onFrame(event: OnFrameEvent): void {
   }
   if (leadingSparks.length) {
     if (leadingSparks[0].circle.opacity < 0) {
-      leadingSparks.shift();
+      leadingSparks.shift()?.circle?.remove();
     }
     leadingSparks.forEach((spark) => {
-      spark.circle.opacity -= event.delta * 2;
       spark.step();
     });
   }

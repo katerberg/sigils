@@ -18,6 +18,7 @@ export class Spark {
   }
 
   public step(): void {
+    this.circle.opacity -= 0.06;
     this.circle.position.x += this.vector.x;
     this.circle.position.y += this.vector.y;
     if (this.vector.x > 0.5) {
