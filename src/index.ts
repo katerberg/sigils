@@ -1,16 +1,12 @@
 import './index.scss';
 import * as paper from 'paper';
-import DollarRecognizer from './lib/dollar';
+import {Sigil} from './classes/sigils/Sigil';
+import {Triangle} from './classes/sigils/Triangle';
+import {Point} from './lib/dollar';
 
 screen.orientation?.lock?.('portrait');
 
-type OnFrameEvent = {
-  delta: number;
-  time: number;
-  count: number;
-};
-
-// let currentSigil: paper.Path;
+let currentSigil: Sigil;
 let guessText: paper.PointText;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -23,30 +19,9 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function drawSpinningRectangle(): void {
-  const rectangle = new paper.Path.Rectangle([75, 75], [100, 100]);
-  rectangle.strokeColor = new paper.Color('black');
-  rectangle.fillColor = new paper.Color('red');
-
-  paper.view.onFrame = (e: OnFrameEvent): void => {
-    // On each frame, rotate the path by 3 degrees:
-    if (e.count % 2 === 0) {
-      rectangle.rotate(3);
-      rectangle.opacity = ((rectangle.opacity * 100 + 1) % 100) / 100;
-      if (rectangle.fillColor) {
-        rectangle.fillColor.hue += 1;
-      }
-    }
-  };
-}
-
 function getDollarRecognized(linePath: paper.Path): void {
-  const recognizer = new DollarRecognizer();
-
-  const recognizeResult = recognizer.Recognize(
-    linePath.segments.map((s) => ({X: s.point.x, Y: s.point.y})),
-    true,
+  const recognizeResult = currentSigil.recognize(
+    linePath.segments.map((s) => ({X: s.point.x, Y: s.point.y, ID: 1, Angle: 0.0})),
   );
   guessText?.remove();
   guessText = new paper.PointText({
@@ -63,7 +38,7 @@ function getDollarRecognized(linePath: paper.Path): void {
 
 function setupDrawListeners(): void {
   const tool = new paper.Tool();
-  tool.minDistance = 10;
+  tool.minDistance = 1;
   tool.maxDistance = 10;
 
   let linePath = new paper.Path();
@@ -91,34 +66,55 @@ function setupDrawListeners(): void {
   tool.onMouseDrag = onMouseDrag;
 }
 
-// function drawSigilToTrace(): void {
-//   const {width, height} = globalThis.gameElement.getBoundingClientRect();
-//   const outerPath = new paper.Path();
-//   outerPath.strokeColor = new paper.Color(0, 0, 0, 1);
-//   outerPath.fillColor = new paper.Color(0, 0, 0, 0.2);
+function drawPoints(points: Point[]): paper.Path {
+  const {width, height} = globalThis.gameElement.getBoundingClientRect();
+  const verticalPadding = height * 0.1;
+  const horizontalPadding = width * 0.1;
+  let minX = width;
+  let maxX = 0;
+  let minY = height;
+  let maxY = 0;
 
-//   const topOuterLeftPoint = {x: width * 0.1, y: height * 0.1};
-//   const topOuterRightPoint = {x: width * 0.9, y: height * 0.1};
-//   outerPath.add(new paper.Segment(topOuterLeftPoint, undefined, {x: width * 0.4, y: height * 1.7}));
-//   outerPath.add(new paper.Segment(topOuterRightPoint, undefined, {x: width * -0.4, y: height * 1.7}));
+  points.forEach((p) => {
+    if (p.X > maxX) {
+      maxX = p.X;
+    }
+    if (p.X < minX) {
+      minX = p.X;
+    }
+    if (p.Y > maxY) {
+      maxY = p.Y;
+    }
+    if (p.Y < minY) {
+      minY = p.Y;
+    }
+  });
 
-//   outerPath.smooth();
+  const rightMostPoint = width * 0.8;
+  const leftOffset = Math.abs(minX);
+  const topOffset = Math.abs(minY);
+  const multiplier = rightMostPoint / (maxX + leftOffset);
 
-//   const sigilLegWidth = 40;
-//   const innerPath = outerPath.clone();
-//   innerPath.segments[0].point.x += sigilLegWidth;
-//   innerPath.segments[0].handleOut.x -= sigilLegWidth;
-//   innerPath.segments[0].handleOut.y -= sigilLegWidth * 2;
-//   innerPath.segments[1].point.x -= sigilLegWidth;
-//   innerPath.segments[1].handleOut.y -= sigilLegWidth * 2;
-//   innerPath.smooth();
+  const sigil = new paper.Path();
+  sigil.strokeColor = new paper.Color(0, 0, 0, 0.2);
+  sigil.strokeWidth = 10;
 
-//   const arch = outerPath.subtract(innerPath);
-//   innerPath.remove();
-//   outerPath.remove();
+  points.forEach(({X, Y}) => {
+    sigil.add({
+      x: (X + leftOffset) * multiplier + horizontalPadding,
+      y: (Y + topOffset) * multiplier + verticalPadding,
+    });
+  });
 
-//   currentSigil = arch as paper.Path;
-// }
+  return sigil;
+}
+
+function drawUnicodeSigil(): void {
+  currentSigil = new Triangle();
+  const sigil = drawPoints(currentSigil.points);
+  sigil.closed = true;
+  sigil.smooth();
+}
 
 window.addEventListener('load', () => {
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -130,8 +126,8 @@ window.addEventListener('load', () => {
     initCanvasSize(gameElement);
 
     paper.setup(globalThis.gameElement);
+    drawUnicodeSigil();
 
-    // drawSigilToTrace();
     setupDrawListeners();
   }
 });
