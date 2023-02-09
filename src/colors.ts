@@ -2,6 +2,9 @@ import * as paper from 'paper';
 
 export const TRANSPARENT = new paper.Color('rgba(255,255,255,0)');
 
+export const BLACK = new paper.Color('#00000');
+export const WHITE = new paper.Color('#FFFFFF');
+
 export const TEAL = new paper.Color('#008080');
 export const TURQUOISE = new paper.Color('#30D5C8');
 

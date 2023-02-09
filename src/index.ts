@@ -5,8 +5,10 @@ import {Sigil} from './classes/sigils/Sigil';
 import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
 import {Spark} from './classes/Spark';
-import {TEAL, TURQUOISE} from './colors';
+import {BLACK, TEAL, TURQUOISE} from './colors';
 import {Point} from './lib/dollar';
+import {getMessageText} from './logic';
+import {getRandomPoint} from './vectorUtils';
 
 type OnFrameEvent = {
   delta: number;
@@ -21,6 +23,7 @@ let drawnSigil: paper.Path;
 let guessText: paper.PointText;
 let linePath: paper.Path;
 let leadingSparks: Spark[];
+const celebrationSparks: Spark[] = [];
 let isDrawing = false;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -41,10 +44,25 @@ function getDollarRecognized(path: paper.Path): void {
   guessText = new paper.PointText({
     point: paper.view.center.transform(new paper.Matrix().translate(0, -230)),
     justification: 'center',
-    fontSize: 30,
-    fillColor: 'black',
+    fontSize: 20,
   });
-  guessText.content = `${Math.floor(recognizeResult.Score * 1000) / 10}%`;
+  guessText.fillColor = BLACK;
+  guessText.content = getMessageText(recognizeResult.Score);
+  if (recognizeResult.Score > 0.7) {
+    const {width} = globalThis.gameElement.getBoundingClientRect();
+    Array.from(Array(100)).forEach(() =>
+      celebrationSparks.push(
+        new Spark(
+          getRandomPoint(
+            guessText.point.x - width / 3,
+            guessText.point.x + width / 3,
+            guessText.point.y,
+            guessText.point.y,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 function drawPoints(points: Point[]): paper.Path {
@@ -158,8 +176,12 @@ function setupDrawListeners(): void {
 
 function onFrame(event: OnFrameEvent): void {
   if (guessText?.opacity > 0) {
-    guessText.opacity -= event.delta;
-    if (guessText.opacity <= 0) {
+    guessText.opacity *= 0.9;
+    if (typeof guessText.fontSize === 'number') {
+      guessText.fontSize++;
+      guessText.position.y++;
+    }
+    if (guessText.opacity <= 0.05) {
       guessText.remove();
     }
   }
@@ -169,6 +191,14 @@ function onFrame(event: OnFrameEvent): void {
     }
     leadingSparks.forEach((spark) => {
       spark.step();
+    });
+  }
+  if (celebrationSparks.length) {
+    if (celebrationSparks[0].circle.opacity < 0) {
+      celebrationSparks.shift()?.circle?.remove();
+    }
+    celebrationSparks.forEach((spark) => {
+      spark.step(0.03);
     });
   }
   if (!isDrawing && linePath?.opacity > 0) {

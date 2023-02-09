@@ -1,6 +1,6 @@
 import * as paper from 'paper';
 import {getRandomSparkColor, TRANSPARENT} from '../colors';
-import {getRandomVector} from '../vectorUtils';
+import {getRandomPoint} from '../vectorUtils';
 
 export class Spark {
   circle: paper.Shape;
@@ -14,16 +14,16 @@ export class Spark {
     gradient.stops = [new paper.GradientStop(getRandomSparkColor(), 0.05), new paper.GradientStop(TRANSPARENT, 0.7)];
     this.circle.fillColor = new paper.Color(gradient, this.circle.bounds.center, this.circle.bounds.rightCenter);
 
-    this.vector = getRandomVector();
+    this.vector = getRandomPoint(-6, 6, -6, 6);
   }
 
-  public step(): void {
-    this.circle.opacity -= 0.06;
+  public step(fade = 0.06): void {
+    this.circle.opacity -= fade;
     this.circle.position.x += this.vector.x;
     this.circle.position.y += this.vector.y;
-    if (this.vector.x > 0.5) {
-      this.vector.x *= 0.8;
-      this.vector.y *= 0.8;
+    if (Math.abs(this.vector.x) > 0.5 || Math.abs(this.vector.y) > 0.5) {
+      this.vector.x *= 0.9;
+      this.vector.y *= 0.9;
     }
   }
 }
