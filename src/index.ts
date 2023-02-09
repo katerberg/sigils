@@ -5,6 +5,7 @@ import {Sigil} from './classes/sigils/Sigil';
 import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
 import {Spark} from './classes/Spark';
+import {TEAL, TURQUOISE} from './colors';
 import {Point} from './lib/dollar';
 
 type OnFrameEvent = {
@@ -115,34 +116,39 @@ function setupDrawListeners(): void {
 
     linePath = new paper.Path({insert: true});
 
-    linePath.strokeColor = new paper.Color({
-      gradient: {
-        stops: [new paper.Color('blue'), new paper.Color('red')],
-      },
-      //origin and destination defines the direction of your gradient.
-      origin: [0, 200], //gradient will start applying from y=200 towards y=0. Adjust this value to get your desired result
-      destination: [0, 0],
-    });
-    linePath.shadowColor = new paper.Color('purple');
+    linePath.strokeColor = TEAL;
+    linePath.shadowColor = TURQUOISE;
     linePath.shadowBlur = 10;
     linePath.strokeWidth = 7;
     linePath.add(event.point);
   }
 
-  function onMouseDrag(event: paper.MouseEvent): void {
-    leadingSparks.push(
-      new Spark(new paper.Point(event.point.x + event.delta.x / 2, event.point.y + event.delta.y / 2)),
-    );
-
-    linePath.add(event.point);
-  }
-
   function onMouseUp(event: paper.MouseEvent): void {
+    if (!isDrawing) {
+      return;
+    }
     isDrawing = false;
     linePath.add(event.point);
     linePath.simplify();
     getDollarRecognized(linePath);
     drawUnicodeSigil();
+  }
+
+  function onMouseDrag(event: paper.MouseEvent): void {
+    if (!isDrawing) {
+      return;
+    }
+    if (event.timeStamp % 2) {
+      leadingSparks.push(
+        new Spark(new paper.Point(event.point.x + event.delta.x / 2, event.point.y + event.delta.y / 2)),
+      );
+    }
+
+    linePath.add(event.point);
+
+    if (linePath.length > 5_000) {
+      onMouseUp(event);
+    }
   }
 
   tool.onMouseDown = onMouseDown;
@@ -162,7 +168,7 @@ function onFrame(event: OnFrameEvent): void {
       leadingSparks.shift();
     }
     leadingSparks.forEach((spark) => {
-      spark.circle.opacity -= event.delta;
+      spark.circle.opacity -= event.delta * 2;
       spark.step();
     });
   }

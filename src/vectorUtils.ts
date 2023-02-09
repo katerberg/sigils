@@ -5,5 +5,5 @@ function getRandomNumber(min: number, max: number): number {
 }
 
 export function getRandomVector(): paper.Point {
-  return new paper.Point(getRandomNumber(-1, 1), getRandomNumber(-1, 1));
+  return new paper.Point(getRandomNumber(-3, 3), getRandomNumber(-3, 3));
 }

@@ -20,5 +20,9 @@ export class Spark {
   public step(): void {
     this.circle.position.x += this.vector.x;
     this.circle.position.y += this.vector.y;
+    if (this.vector.x > 0.5) {
+      this.vector.x *= 0.8;
+      this.vector.y *= 0.8;
+    }
   }
 }
