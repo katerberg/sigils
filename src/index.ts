@@ -5,11 +5,19 @@ import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
 import {Point} from './lib/dollar';
 
+type OnFrameEvent = {
+  delta: number;
+  time: number;
+  count: number;
+};
+
 screen.orientation?.lock?.('portrait');
 
 let currentSigil: Sigil;
 let drawnSigil: paper.Path;
 let guessText: paper.PointText;
+let linePath: paper.Path;
+let isDrawing = false;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
   const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -21,21 +29,18 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
-function getDollarRecognized(linePath: paper.Path): void {
+function getDollarRecognized(path: paper.Path): void {
   const recognizeResult = currentSigil.recognize(
-    linePath.segments.map((s) => ({X: s.point.x, Y: s.point.y, ID: 1, Angle: 0.0})),
+    path.segments.map((s) => ({X: s.point.x, Y: s.point.y, ID: 1, Angle: 0.0})),
   );
   guessText?.remove();
   guessText = new paper.PointText({
-    point: paper.view.center.transform(new paper.Matrix().translate(0, -330)),
+    point: paper.view.center.transform(new paper.Matrix().translate(0, -230)),
     justification: 'center',
     fontSize: 30,
     fillColor: 'black',
   });
-  guessText.content = `
-  Guess: ${recognizeResult.Name}
-  Chance: ${Math.floor(recognizeResult.Score * 1000) / 10}%
-  `;
+  guessText.content = `${Math.floor(recognizeResult.Score * 1000) / 10}%`;
 }
 
 function drawPoints(points: Point[]): paper.Path {
@@ -45,7 +50,6 @@ function drawPoints(points: Point[]): paper.Path {
   let minX = width;
   let maxX = 0;
   let minY = height;
-  let maxY = 0;
 
   points.forEach((p) => {
     if (p.X > maxX) {
@@ -53,9 +57,6 @@ function drawPoints(points: Point[]): paper.Path {
     }
     if (p.X < minX) {
       minX = p.X;
-    }
-    if (p.Y > maxY) {
-      maxY = p.Y;
     }
     if (p.Y < minY) {
       minY = p.Y;
@@ -89,13 +90,13 @@ function drawUnicodeSigil(): void {
 }
 
 function setupDrawListeners(): void {
+  linePath = new paper.Path();
   const tool = new paper.Tool();
   tool.minDistance = 1;
   tool.maxDistance = 10;
 
-  let linePath = new paper.Path();
-
   function onMouseDown(event: paper.MouseEvent): void {
+    isDrawing = true;
     linePath?.remove();
     linePath = new paper.Path({insert: true});
     linePath.strokeColor = new paper.Color('black');
@@ -108,6 +109,7 @@ function setupDrawListeners(): void {
   }
 
   function onMouseUp(event: paper.MouseEvent): void {
+    isDrawing = false;
     linePath.add(event.point);
     linePath.simplify();
     getDollarRecognized(linePath);
@@ -117,6 +119,18 @@ function setupDrawListeners(): void {
   tool.onMouseDown = onMouseDown;
   tool.onMouseUp = onMouseUp;
   tool.onMouseDrag = onMouseDrag;
+}
+
+function onFrame(_event: OnFrameEvent): void {
+  if (guessText?.opacity > 0) {
+    guessText.opacity -= 0.005;
+    if (guessText.opacity <= 0) {
+      guessText.remove();
+    }
+  }
+  if (!isDrawing && linePath?.opacity > 0) {
+    linePath.opacity -= 0.005;
+  }
 }
 
 window.addEventListener('load', () => {
@@ -132,5 +146,6 @@ window.addEventListener('load', () => {
     drawUnicodeSigil();
 
     setupDrawListeners();
+    paper.view.onFrame = onFrame;
   }
 });
