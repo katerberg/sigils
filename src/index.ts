@@ -121,15 +121,15 @@ function setupDrawListeners(): void {
   tool.onMouseDrag = onMouseDrag;
 }
 
-function onFrame(_event: OnFrameEvent): void {
+function onFrame(event: OnFrameEvent): void {
   if (guessText?.opacity > 0) {
-    guessText.opacity -= 0.005;
+    guessText.opacity -= event.delta;
     if (guessText.opacity <= 0) {
       guessText.remove();
     }
   }
   if (!isDrawing && linePath?.opacity > 0) {
-    linePath.opacity -= 0.005;
+    linePath.opacity -= event.delta;
   }
 }
 
