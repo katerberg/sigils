@@ -4,16 +4,6 @@ export function isDebug(): boolean {
   return debug !== null;
 }
 
-export function clearCanvas(): void {
-  const ctx = (globalThis.gameElement as HTMLCanvasElement)?.getContext('2d');
-  if (ctx) {
-    const prevFill = ctx.fillStyle;
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = prevFill;
-  }
-}
-
 export function waitFor(ms: number): Promise<void> {
   let resolve: () => void;
   const promise = new Promise((promiseResolve) => {

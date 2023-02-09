@@ -4,6 +4,7 @@ import {Circle} from './classes/sigils/Circle';
 import {Sigil} from './classes/sigils/Sigil';
 import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
+import {Spark} from './classes/Spark';
 import {Point} from './lib/dollar';
 
 type OnFrameEvent = {
@@ -18,6 +19,7 @@ let currentSigil: Sigil;
 let drawnSigil: paper.Path;
 let guessText: paper.PointText;
 let linePath: paper.Path;
+let leadingSparks: Spark[];
 let isDrawing = false;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -99,6 +101,7 @@ function drawUnicodeSigil(): void {
 
 function setupDrawListeners(): void {
   linePath = new paper.Path();
+  leadingSparks = [];
   const tool = new paper.Tool();
   tool.minDistance = 1;
   tool.maxDistance = 10;
@@ -106,13 +109,31 @@ function setupDrawListeners(): void {
   function onMouseDown(event: paper.MouseEvent): void {
     isDrawing = true;
     linePath?.remove();
+    leadingSparks.push(new Spark(event.point));
+
+    linePath.add(event.point);
+
     linePath = new paper.Path({insert: true});
-    linePath.strokeColor = new paper.Color('black');
+
+    linePath.strokeColor = new paper.Color({
+      gradient: {
+        stops: [new paper.Color('blue'), new paper.Color('red')],
+      },
+      //origin and destination defines the direction of your gradient.
+      origin: [0, 200], //gradient will start applying from y=200 towards y=0. Adjust this value to get your desired result
+      destination: [0, 0],
+    });
+    linePath.shadowColor = new paper.Color('purple');
+    linePath.shadowBlur = 10;
     linePath.strokeWidth = 7;
     linePath.add(event.point);
   }
 
   function onMouseDrag(event: paper.MouseEvent): void {
+    leadingSparks.push(
+      new Spark(new paper.Point(event.point.x + event.delta.x / 2, event.point.y + event.delta.y / 2)),
+    );
+
     linePath.add(event.point);
   }
 
@@ -135,6 +156,15 @@ function onFrame(event: OnFrameEvent): void {
     if (guessText.opacity <= 0) {
       guessText.remove();
     }
+  }
+  if (leadingSparks.length) {
+    if (leadingSparks[0].circle.opacity < 0) {
+      leadingSparks.shift();
+    }
+    leadingSparks.forEach((spark) => {
+      spark.circle.opacity -= event.delta;
+      spark.step();
+    });
   }
   if (!isDrawing && linePath?.opacity > 0) {
     linePath.opacity -= event.delta;
