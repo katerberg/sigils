@@ -1,12 +1,14 @@
 import './index.scss';
 import * as paper from 'paper';
 import {Sigil} from './classes/sigils/Sigil';
+import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
 import {Point} from './lib/dollar';
 
 screen.orientation?.lock?.('portrait');
 
 let currentSigil: Sigil;
+let drawnSigil: paper.Path;
 let guessText: paper.PointText;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -34,36 +36,6 @@ function getDollarRecognized(linePath: paper.Path): void {
   Guess: ${recognizeResult.Name}
   Chance: ${Math.floor(recognizeResult.Score * 1000) / 10}%
   `;
-}
-
-function setupDrawListeners(): void {
-  const tool = new paper.Tool();
-  tool.minDistance = 1;
-  tool.maxDistance = 10;
-
-  let linePath = new paper.Path();
-
-  function onMouseDown(event: paper.MouseEvent): void {
-    linePath?.remove();
-    linePath = new paper.Path({insert: true});
-    linePath.strokeColor = new paper.Color('black');
-    linePath.strokeWidth = 7;
-    linePath.add(event.point);
-  }
-
-  function onMouseDrag(event: paper.MouseEvent): void {
-    linePath.add(event.point);
-  }
-
-  function onMouseUp(event: paper.MouseEvent): void {
-    linePath.add(event.point);
-    linePath.simplify();
-    getDollarRecognized(linePath);
-  }
-
-  tool.onMouseDown = onMouseDown;
-  tool.onMouseUp = onMouseUp;
-  tool.onMouseDrag = onMouseDrag;
 }
 
 function drawPoints(points: Point[]): paper.Path {
@@ -110,10 +82,41 @@ function drawPoints(points: Point[]): paper.Path {
 }
 
 function drawUnicodeSigil(): void {
-  currentSigil = new Triangle();
-  const sigil = drawPoints(currentSigil.points);
-  sigil.closed = true;
-  sigil.smooth();
+  currentSigil = Math.random() > 0.5 ? new Triangle() : new Square();
+  drawnSigil?.remove();
+  drawnSigil = drawPoints(currentSigil.points);
+  drawnSigil.closed = true;
+}
+
+function setupDrawListeners(): void {
+  const tool = new paper.Tool();
+  tool.minDistance = 1;
+  tool.maxDistance = 10;
+
+  let linePath = new paper.Path();
+
+  function onMouseDown(event: paper.MouseEvent): void {
+    linePath?.remove();
+    linePath = new paper.Path({insert: true});
+    linePath.strokeColor = new paper.Color('black');
+    linePath.strokeWidth = 7;
+    linePath.add(event.point);
+  }
+
+  function onMouseDrag(event: paper.MouseEvent): void {
+    linePath.add(event.point);
+  }
+
+  function onMouseUp(event: paper.MouseEvent): void {
+    linePath.add(event.point);
+    linePath.simplify();
+    getDollarRecognized(linePath);
+    drawUnicodeSigil();
+  }
+
+  tool.onMouseDown = onMouseDown;
+  tool.onMouseUp = onMouseUp;
+  tool.onMouseDrag = onMouseDrag;
 }
 
 window.addEventListener('load', () => {

@@ -12,6 +12,9 @@ export abstract class Sigil {
   }
 
   recognize(points: Point[]): Result {
-    return this.recognizer.Recognize(points, true);
+    if (points?.length > 1) {
+      return this.recognizer.Recognize(points, true);
+    }
+    return {Name: 'unknown', Score: 0, Time: 0};
   }
 }

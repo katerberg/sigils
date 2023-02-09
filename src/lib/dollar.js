@@ -92,10 +92,6 @@ export default function PDollarPlusRecognizer() // constructor
 	// one predefined point-cloud for each gesture
 	//
 	this.PointClouds = new Array(NumPointClouds);
-	// this.PointClouds[0] = new PointCloud("triangle", new Array(
-	// 	new Point(7,0,1),new Point(87,0,1),
-	// 	new Point(47,69,1), new Point(7,0,1)
-	// ));
 	// this.PointClouds[0] = new PointCloud("T", new Array(
 	// 	new Point(30,7,1),new Point(103,7,1),
 	// 	new Point(66,7,2),new Point(66,87,2)
