@@ -67,8 +67,8 @@ function getDollarRecognized(path: paper.Path): void {
 
 function drawPoints(points: Point[]): paper.Path {
   const {width, height} = globalThis.gameElement.getBoundingClientRect();
-  const verticalPadding = height * 0.1;
-  const horizontalPadding = width * 0.1;
+  const verticalPadding = height * 0.2;
+  const horizontalPadding = width * 0.2;
   let minX = width;
   let maxX = 0;
   let minY = height;
@@ -85,7 +85,7 @@ function drawPoints(points: Point[]): paper.Path {
     }
   });
 
-  const rightMostPoint = width * 0.8;
+  const rightMostPoint = width - horizontalPadding * 2;
   const leftOffset = Math.abs(minX);
   const topOffset = Math.abs(minY);
   const multiplier = rightMostPoint / (maxX + leftOffset);
