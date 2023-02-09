@@ -1,5 +1,6 @@
 import './index.scss';
 import * as paper from 'paper';
+import {Circle} from './classes/sigils/Circle';
 import {Sigil} from './classes/sigils/Sigil';
 import {Square} from './classes/sigils/Square';
 import {Triangle} from './classes/sigils/Triangle';
@@ -83,7 +84,14 @@ function drawPoints(points: Point[]): paper.Path {
 }
 
 function drawUnicodeSigil(): void {
-  currentSigil = Math.random() > 0.5 ? new Triangle() : new Square();
+  const random = Math.random();
+  if (random > 0.67) {
+    currentSigil = new Triangle();
+  } else if (random > 0.33) {
+    currentSigil = new Square();
+  } else {
+    currentSigil = new Circle();
+  }
   drawnSigil?.remove();
   drawnSigil = drawPoints(currentSigil.points);
   drawnSigil.closed = true;
