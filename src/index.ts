@@ -104,6 +104,16 @@ function drawPoints(points: Point[]): paper.Path {
   return sigil;
 }
 
+function drawHelperText(): void {
+  new paper.PointText({
+    point: paper.view.center.transform(new paper.Matrix().translate(0, 230)),
+    justification: 'center',
+    fontSize: 20,
+    fillColor: BLACK,
+    content: 'Trace the shape',
+  });
+}
+
 function drawUnicodeSigil(): void {
   const random = Math.random();
   if (random > 0.67) {
@@ -202,7 +212,7 @@ function onFrame(event: OnFrameEvent): void {
     });
   }
   if (!isDrawing && linePath?.opacity > 0) {
-    linePath.opacity -= event.delta;
+    linePath.opacity -= event.delta * 2;
   }
 }
 
@@ -217,6 +227,7 @@ window.addEventListener('load', () => {
 
     paper.setup(globalThis.gameElement);
     drawUnicodeSigil();
+    drawHelperText();
 
     setupDrawListeners();
     paper.view.onFrame = onFrame;
