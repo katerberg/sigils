@@ -1,14 +1,10 @@
 import './index.scss';
 import * as paper from 'paper';
-import {Circle} from './classes/sigils/Circle';
+import {SigilQueue} from './classes/SigilQueue';
 import {Sigil} from './classes/sigils/Sigil';
-import {Square} from './classes/sigils/Square';
-import {Triangle} from './classes/sigils/Triangle';
 import {Spark} from './classes/Spark';
 import {BLACK, TEAL, TURQUOISE} from './colors';
 import {Point} from './lib/dollar';
-import {getMessageText} from './logic';
-import {getRandomPoint} from './vectorUtils';
 
 type OnFrameEvent = {
   delta: number;
@@ -18,13 +14,10 @@ type OnFrameEvent = {
 
 screen.orientation?.lock?.('portrait');
 
-const sigilQueue: Sigil[] = [];
-let currentSigil: Sigil;
+let sigilQueue: SigilQueue;
 let drawnSigil: paper.Path;
-let guessText: paper.PointText;
 let linePath: paper.Path;
 let leadingSparks: Spark[];
-const celebrationSparks: Spark[] = [];
 let isDrawing = false;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -36,37 +29,6 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   canvas.style.height = `${height}`; //actual height of canvas
   globalThis.gameElement = canvas;
 }
-
-function getDollarRecognized(path: paper.Path): number {
-  const recognizeResult = currentSigil.recognize(
-    path.segments.map((s) => ({X: s.point.x, Y: s.point.y, ID: 1, Angle: 0.0})),
-  );
-  guessText?.remove();
-  guessText = new paper.PointText({
-    point: paper.view.center.transform(new paper.Matrix().translate(0, -230)),
-    justification: 'center',
-    fontSize: 20,
-  });
-  guessText.fillColor = BLACK;
-  guessText.content = getMessageText(recognizeResult.Score);
-  if (recognizeResult.Score > 0.7) {
-    const {width} = globalThis.gameElement.getBoundingClientRect();
-    Array.from(Array(100)).forEach(() =>
-      celebrationSparks.push(
-        new Spark(
-          getRandomPoint(
-            guessText.point.x - width / 3,
-            guessText.point.x + width / 3,
-            guessText.point.y,
-            guessText.point.y,
-          ),
-        ),
-      ),
-    );
-  }
-  return recognizeResult.Score;
-}
-
 function drawPoints(points: Point[]): paper.Path {
   const {width, height} = globalThis.gameElement.getBoundingClientRect();
   const verticalPadding = height * 0.2;
@@ -116,22 +78,7 @@ function drawHelperText(): void {
   });
 }
 
-function getRandomSigil(): Sigil {
-  const random = Math.random();
-  if (random > 0.67) {
-    return new Triangle();
-  } else if (random > 0.33) {
-    return new Square();
-  }
-  return new Circle();
-}
-
-function drawUnicodeSigil(): void {
-  const nextSigil = sigilQueue.shift();
-  if (!nextSigil) {
-    return;
-  }
-  currentSigil = nextSigil;
+function drawUnicodeSigil(currentSigil: Sigil): void {
   drawnSigil?.remove();
   drawnSigil = drawPoints(currentSigil.points);
   drawnSigil.closed = true;
@@ -167,10 +114,8 @@ function setupDrawListeners(): void {
     isDrawing = false;
     linePath.add(event.point);
     linePath.simplify();
-    const result = getDollarRecognized(linePath);
-    if (currentSigil.handleDrawResult(result) < 0) {
-      drawUnicodeSigil();
-    }
+    sigilQueue.handleDrawnLine(linePath);
+    drawUnicodeSigil(sigilQueue.currentSigil);
   }
 
   function onMouseDrag(event: paper.MouseEvent): void {
@@ -196,30 +141,13 @@ function setupDrawListeners(): void {
 }
 
 function onFrame(event: OnFrameEvent): void {
-  if (guessText?.opacity > 0) {
-    guessText.opacity *= 0.9;
-    if (typeof guessText.fontSize === 'number') {
-      guessText.fontSize++;
-      guessText.position.y++;
-    }
-    if (guessText.opacity <= 0.05) {
-      guessText.remove();
-    }
-  }
+  sigilQueue.onFrame();
   if (leadingSparks.length) {
     if (leadingSparks[0].circle.opacity < 0) {
       leadingSparks.shift()?.circle?.remove();
     }
     leadingSparks.forEach((spark) => {
       spark.step();
-    });
-  }
-  if (celebrationSparks.length) {
-    if (celebrationSparks[0].circle.opacity < 0) {
-      celebrationSparks.shift()?.circle?.remove();
-    }
-    celebrationSparks.forEach((spark) => {
-      spark.step(0.03);
     });
   }
   if (!isDrawing && linePath?.opacity > 0) {
@@ -237,10 +165,8 @@ window.addEventListener('load', () => {
     initCanvasSize(gameElement);
 
     paper.setup(globalThis.gameElement);
-    for (let i = 0; i < 5; i++) {
-      sigilQueue.push(getRandomSigil());
-    }
-    drawUnicodeSigil();
+    sigilQueue = new SigilQueue();
+    drawUnicodeSigil(sigilQueue.currentSigil);
     drawHelperText();
 
     setupDrawListeners();
