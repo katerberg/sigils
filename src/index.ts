@@ -18,6 +18,7 @@ type OnFrameEvent = {
 
 screen.orientation?.lock?.('portrait');
 
+const sigilQueue: Sigil[] = [];
 let currentSigil: Sigil;
 let drawnSigil: paper.Path;
 let guessText: paper.PointText;
@@ -36,7 +37,7 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
-function getDollarRecognized(path: paper.Path): void {
+function getDollarRecognized(path: paper.Path): number {
   const recognizeResult = currentSigil.recognize(
     path.segments.map((s) => ({X: s.point.x, Y: s.point.y, ID: 1, Angle: 0.0})),
   );
@@ -63,6 +64,7 @@ function getDollarRecognized(path: paper.Path): void {
       ),
     );
   }
+  return recognizeResult.Score;
 }
 
 function drawPoints(points: Point[]): paper.Path {
@@ -114,15 +116,22 @@ function drawHelperText(): void {
   });
 }
 
-function drawUnicodeSigil(): void {
+function getRandomSigil(): Sigil {
   const random = Math.random();
   if (random > 0.67) {
-    currentSigil = new Triangle();
+    return new Triangle();
   } else if (random > 0.33) {
-    currentSigil = new Square();
-  } else {
-    currentSigil = new Circle();
+    return new Square();
   }
+  return new Circle();
+}
+
+function drawUnicodeSigil(): void {
+  const nextSigil = sigilQueue.shift();
+  if (!nextSigil) {
+    return;
+  }
+  currentSigil = nextSigil;
   drawnSigil?.remove();
   drawnSigil = drawPoints(currentSigil.points);
   drawnSigil.closed = true;
@@ -158,8 +167,10 @@ function setupDrawListeners(): void {
     isDrawing = false;
     linePath.add(event.point);
     linePath.simplify();
-    getDollarRecognized(linePath);
-    drawUnicodeSigil();
+    const result = getDollarRecognized(linePath);
+    if (currentSigil.handleDrawResult(result) < 0) {
+      drawUnicodeSigil();
+    }
   }
 
   function onMouseDrag(event: paper.MouseEvent): void {
@@ -226,6 +237,9 @@ window.addEventListener('load', () => {
     initCanvasSize(gameElement);
 
     paper.setup(globalThis.gameElement);
+    for (let i = 0; i < 5; i++) {
+      sigilQueue.push(getRandomSigil());
+    }
     drawUnicodeSigil();
     drawHelperText();
 
