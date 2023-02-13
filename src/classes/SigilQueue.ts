@@ -1,22 +1,10 @@
 import * as paper from 'paper';
 import {BLACK} from '../colors';
 import {getMessageText} from '../logic';
+import {getRandomSigil} from '../sigilUtils';
 import {getRandomPoint} from '../vectorUtils';
-import {Circle} from './sigils/Circle';
 import {Sigil} from './sigils/Sigil';
-import {Square} from './sigils/Square';
-import {Triangle} from './sigils/Triangle';
 import {Spark} from './Spark';
-
-function getRandomSigil(): Sigil {
-  const random = Math.random();
-  if (random > 0.67) {
-    return new Triangle();
-  } else if (random > 0.33) {
-    return new Square();
-  }
-  return new Circle();
-}
 
 export class SigilQueue {
   queue: Sigil[];
