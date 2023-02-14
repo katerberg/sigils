@@ -1,18 +1,29 @@
 import DollarRecognizer, {Result} from '../../lib/dollar';
 import {DAMAGE_THRESHOLD} from '../../logic';
 import {Point} from '../Point';
+import {SigilPreview} from '../SigilPreview';
 
 export abstract class Sigil {
   protected recognizer: DollarRecognizer;
+
+  position: number;
+
+  preview: SigilPreview;
 
   hp: number;
 
   points: Point[];
 
   constructor() {
+    this.position = 0;
     this.points = [];
     this.hp = 0.3;
     this.recognizer = new DollarRecognizer();
+    this.preview = new SigilPreview(this);
+  }
+
+  die(): void {
+    this.preview.die();
   }
 
   recognize(points: Point[]): Result {
@@ -27,5 +38,12 @@ export abstract class Sigil {
       this.hp -= result - DAMAGE_THRESHOLD.ok;
     }
     return this.hp;
+  }
+
+  step(): void {
+    this.position += 0.01;
+    if (this.position > 0) {
+      this.preview.step(this.position);
+    }
   }
 }

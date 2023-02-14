@@ -19,6 +19,7 @@ export class SigilQueue {
     this.guessText = new paper.PointText({x: 0, y: 0});
     for (let i = 0; i < 5; i++) {
       this.queue.push(getRandomSigil());
+      this.queue[i].position = -1 * i;
     }
   }
 
@@ -59,7 +60,7 @@ export class SigilQueue {
   handleDrawnLine(drawnLine: paper.Path): void {
     const result = this.getDollarRecognized(drawnLine);
     if (this.currentSigil.handleDrawResult(result) < 0) {
-      this.queue.shift();
+      this.queue.shift()?.die();
     }
   }
 
@@ -80,6 +81,14 @@ export class SigilQueue {
       }
       this.celebrationSparks.forEach((spark) => {
         spark.step(0.03);
+      });
+    }
+
+    if (this.queue.length) {
+      this.queue.forEach((sigil, i) => {
+        if (i === 1) {
+          sigil.step();
+        }
       });
     }
   }

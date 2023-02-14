@@ -5,6 +5,7 @@ import {Sigil} from './classes/sigils/Sigil';
 import {Spark} from './classes/Spark';
 import {BLACK, TEAL, TURQUOISE} from './colors';
 import {Point} from './lib/dollar';
+import {getMinMax} from './vectorUtils';
 
 type OnFrameEvent = {
   delta: number;
@@ -33,21 +34,7 @@ function drawPoints(points: Point[]): paper.Path {
   const {width, height} = globalThis.gameElement.getBoundingClientRect();
   const verticalPadding = height * 0.2;
   const horizontalPadding = width * 0.2;
-  let minX = width;
-  let maxX = 0;
-  let minY = height;
-
-  points.forEach((p) => {
-    if (p.X > maxX) {
-      maxX = p.X;
-    }
-    if (p.X < minX) {
-      minX = p.X;
-    }
-    if (p.Y < minY) {
-      minY = p.Y;
-    }
-  });
+  const {minX, minY, maxX} = getMinMax(points);
 
   const rightMostPoint = width - horizontalPadding * 2;
   const leftOffset = Math.abs(minX);
@@ -79,7 +66,10 @@ function drawHelperText(): void {
 }
 
 function drawUnicodeSigil(currentSigil: Sigil): void {
-  drawnSigil?.remove();
+  if (drawnSigil) {
+    drawnSigil
+    drawnSigil.remove();
+  }
   drawnSigil = drawPoints(currentSigil.points);
   drawnSigil.closed = true;
 }
