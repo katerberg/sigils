@@ -133,6 +133,7 @@ export function killSigil(sigil: Sigil): void {
   } else {
     drawnSigil?.remove();
     helperText?.remove();
+    linePath?.remove();
     tool?.remove();
   }
 }

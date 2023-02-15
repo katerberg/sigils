@@ -20,6 +20,7 @@ export class SigilQueue {
     this.guessText = new paper.PointText({x: 0, y: 0});
     for (let i = 0; i < 5; i++) {
       this.queue.push(getRandomSigil());
+      this.queue[i].position = i * -0.5;
     }
   }
 
@@ -91,10 +92,8 @@ export class SigilQueue {
     }
 
     if (this.queue.length) {
-      this.queue.forEach((sigil, i) => {
-        if (i === 0) {
-          sigil.step(event);
-        }
+      this.queue.forEach((sigil) => {
+        sigil.step(event);
       });
     }
   }
