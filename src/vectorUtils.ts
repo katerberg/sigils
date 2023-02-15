@@ -46,3 +46,7 @@ export function getMinMax(points: Point[]): MinMax {
 
   return {minX, maxX, minY, maxY};
 }
+
+export function getSigilPreviewYOffset(rotation: number): number {
+  return Math.sin(rotation * Math.PI) * 15;
+}

@@ -1,5 +1,5 @@
 import * as paper from 'paper';
-import {getMinMax} from '../vectorUtils';
+import {getMinMax, getRandomNumber, getSigilPreviewYOffset} from '../vectorUtils';
 import {Sigil} from './sigils/Sigil';
 
 export class SigilPreview {
@@ -11,11 +11,18 @@ export class SigilPreview {
 
   startingXPadding: number;
 
+  startingYPadding: number;
+
+  yRotation: number;
+
   constructor(sigil: Sigil) {
     this.sigil = sigil;
 
-    const {width} = globalThis.gameElement.getBoundingClientRect();
+    const {height, width} = globalThis.gameElement.getBoundingClientRect();
     this.startingXPadding = width * 0.92;
+    this.startingYPadding = height * 0.04;
+
+    this.yRotation = getRandomNumber(0, 2);
 
     this.getXStartPosition = (x: number): number => {
       const {minX, maxX} = getMinMax(this.sigil.points);
@@ -28,8 +35,7 @@ export class SigilPreview {
   }
 
   drawPoints(): paper.Path {
-    const {width, height} = globalThis.gameElement.getBoundingClientRect();
-    const verticalPadding = height * 0.01;
+    const {width} = globalThis.gameElement.getBoundingClientRect();
     const horizontalPadding = width * 0.92;
 
     const {minX, minY, maxX} = getMinMax(this.sigil.points);
@@ -46,7 +52,7 @@ export class SigilPreview {
     this.sigil.points.forEach(({X, Y}) => {
       drawn.add({
         x: this.getXStartPosition(X) + horizontalPadding,
-        y: (Y + topOffset) * multiplier + verticalPadding,
+        y: (Y + topOffset) * multiplier + this.startingYPadding,
       });
     });
     drawn.closed = true;
@@ -62,10 +68,16 @@ export class SigilPreview {
     if (!this.drawn) {
       this.drawn = this.drawPoints();
     }
-    this.sigil.points.forEach(({X}, i) => {
+    const previousYRotation = this.yRotation;
+    this.yRotation = (this.yRotation + getRandomNumber(0.003, 0.007)) % 2;
+    this.sigil.points.forEach(({X, Y}, i) => {
       if (this.drawn) {
         this.drawn.segments[i].point.x =
           this.getXStartPosition(X) + this.startingXPadding - position * this.startingXPadding;
+        this.drawn.segments[i].point.y =
+          this.drawn.segments[i].point.y -
+          getSigilPreviewYOffset(previousYRotation) +
+          getSigilPreviewYOffset(this.yRotation);
       }
     });
     this.drawn?.segments.forEach((segment) => segment);
