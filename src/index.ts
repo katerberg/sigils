@@ -5,18 +5,14 @@ import {Sigil} from './classes/sigils/Sigil';
 import {Spark} from './classes/Spark';
 import {BLACK, TEAL, TURQUOISE} from './colors';
 import {Point} from './lib/dollar';
-import {getMinMax} from './vectorUtils';
-
-type OnFrameEvent = {
-  delta: number;
-  time: number;
-  count: number;
-};
+import {getMinMax, OnFrameEvent} from './vectorUtils';
 
 screen.orientation?.lock?.('portrait');
 
+let tool: paper.Tool;
 let sigilQueue: SigilQueue;
 let drawnSigil: paper.Path;
+let helperText: paper.PointText;
 let linePath: paper.Path;
 let leadingSparks: Spark[];
 let isDrawing = false;
@@ -56,7 +52,7 @@ function drawPoints(points: Point[]): paper.Path {
 }
 
 function drawHelperText(): void {
-  new paper.PointText({
+  helperText = new paper.PointText({
     point: paper.view.center.transform(new paper.Matrix().translate(0, 230)),
     justification: 'center',
     fontSize: 20,
@@ -67,7 +63,6 @@ function drawHelperText(): void {
 
 function drawUnicodeSigil(currentSigil: Sigil): void {
   if (drawnSigil) {
-    drawnSigil
     drawnSigil.remove();
   }
   drawnSigil = drawPoints(currentSigil.points);
@@ -77,7 +72,7 @@ function drawUnicodeSigil(currentSigil: Sigil): void {
 function setupDrawListeners(): void {
   linePath = new paper.Path();
   leadingSparks = [];
-  const tool = new paper.Tool();
+  tool = new paper.Tool();
   tool.minDistance = 1;
   tool.maxDistance = 10;
 
@@ -130,8 +125,20 @@ function setupDrawListeners(): void {
   tool.onMouseDrag = onMouseDrag;
 }
 
+export function killSigil(sigil: Sigil): void {
+  sigilQueue.killSigil(sigil);
+
+  if (sigilQueue.currentSigil) {
+    drawUnicodeSigil(sigilQueue.currentSigil);
+  } else {
+    drawnSigil?.remove();
+    helperText?.remove();
+    tool?.remove();
+  }
+}
+
 function onFrame(event: OnFrameEvent): void {
-  sigilQueue.onFrame();
+  sigilQueue.onFrame(event);
   if (leadingSparks.length) {
     if (leadingSparks[0].circle.opacity < 0) {
       leadingSparks.shift()?.circle?.remove();

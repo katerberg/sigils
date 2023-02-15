@@ -1,15 +1,30 @@
 import * as paper from 'paper';
-import {Point} from '../lib/dollar';
 import {getMinMax} from '../vectorUtils';
 import {Sigil} from './sigils/Sigil';
 
 export class SigilPreview {
-  points: Point[];
+  sigil: Sigil;
 
   drawn: paper.Path | undefined;
 
+  getXStartPosition: (x: number) => number;
+
+  startingXPadding: number;
+
   constructor(sigil: Sigil) {
-    this.points = sigil.points;
+    this.sigil = sigil;
+
+    const {width} = globalThis.gameElement.getBoundingClientRect();
+    this.startingXPadding = width * 0.92;
+
+    this.getXStartPosition = (x: number): number => {
+      const {minX, maxX} = getMinMax(this.sigil.points);
+
+      const sigilWidth = width * 0.05;
+      const leftOffset = Math.abs(minX);
+      const multiplier = sigilWidth / (maxX + leftOffset);
+      return (x + leftOffset) * multiplier;
+    };
   }
 
   drawPoints(): paper.Path {
@@ -17,25 +32,22 @@ export class SigilPreview {
     const verticalPadding = height * 0.01;
     const horizontalPadding = width * 0.92;
 
-    const {minX, minY, maxX} = getMinMax(this.points);
+    const {minX, minY, maxX} = getMinMax(this.sigil.points);
 
-    const rightMostPoint = width * 0.05;
+    const sigilWidth = width * 0.05;
     const leftOffset = Math.abs(minX);
     const topOffset = Math.abs(minY);
-    const multiplier = rightMostPoint / (maxX + leftOffset);
+    const multiplier = sigilWidth / (maxX + leftOffset);
 
     const drawn = new paper.Path();
     drawn.strokeColor = new paper.Color(0, 0, 0, 0.2);
     drawn.strokeWidth = 4;
 
-    console.log(leftOffset, horizontalPadding);
-    console.log(this.points);
-    this.points.forEach(({X, Y}) => {
+    this.sigil.points.forEach(({X, Y}) => {
       drawn.add({
-        x: (X + leftOffset) * multiplier + horizontalPadding,
+        x: this.getXStartPosition(X) + horizontalPadding,
         y: (Y + topOffset) * multiplier + verticalPadding,
       });
-      console.log((X + leftOffset) * multiplier + horizontalPadding);
     });
     drawn.closed = true;
 
@@ -46,12 +58,16 @@ export class SigilPreview {
     this.drawn?.remove();
   }
 
-  moveTo(position: number): void {}
-
-  step(position: number): void {
+  moveTo(position: number): void {
     if (!this.drawn) {
       this.drawn = this.drawPoints();
     }
-    this.moveTo(position);
+    this.sigil.points.forEach(({X}, i) => {
+      if (this.drawn) {
+        this.drawn.segments[i].point.x =
+          this.getXStartPosition(X) + this.startingXPadding - position * this.startingXPadding;
+      }
+    });
+    this.drawn?.segments.forEach((segment) => segment);
   }
 }

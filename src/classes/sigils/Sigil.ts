@@ -1,11 +1,14 @@
+import {killSigil} from '../..';
 import DollarRecognizer, {Result} from '../../lib/dollar';
 import {DAMAGE_THRESHOLD} from '../../logic';
+import {OnFrameEvent} from '../../vectorUtils';
 import {Point} from '../Point';
 import {SigilPreview} from '../SigilPreview';
 
 export abstract class Sigil {
   protected recognizer: DollarRecognizer;
 
+  // A value which indicates how close to arrival the sigil is. Zero is on screen, One is scoring.
   position: number;
 
   preview: SigilPreview;
@@ -40,10 +43,15 @@ export abstract class Sigil {
     return this.hp;
   }
 
-  step(): void {
-    this.position += 0.01;
-    if (this.position > 0) {
-      this.preview.step(this.position);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  step(event: OnFrameEvent): void {
+    this.position += 0.001;
+    // this.position += 0.001;
+    if (this.position > 0 && this.position <= 1) {
+      this.preview.moveTo(this.position);
+    }
+    if (this.position >= 1) {
+      killSigil(this);
     }
   }
 }

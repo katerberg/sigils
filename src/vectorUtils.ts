@@ -8,6 +8,12 @@ type MinMax = {
   maxY: number;
 };
 
+export type OnFrameEvent = {
+  delta: number;
+  time: number;
+  count: number;
+};
+
 export function getRandomNumber(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }

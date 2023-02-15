@@ -1,8 +1,9 @@
 import * as paper from 'paper';
+import {killSigil} from '..';
 import {BLACK} from '../colors';
 import {getMessageText} from '../logic';
 import {getRandomSigil} from '../sigilUtils';
-import {getRandomPoint} from '../vectorUtils';
+import {getRandomPoint, OnFrameEvent} from '../vectorUtils';
 import {Sigil} from './sigils/Sigil';
 import {Spark} from './Spark';
 
@@ -19,12 +20,17 @@ export class SigilQueue {
     this.guessText = new paper.PointText({x: 0, y: 0});
     for (let i = 0; i < 5; i++) {
       this.queue.push(getRandomSigil());
-      this.queue[i].position = -1 * i;
     }
   }
 
   get currentSigil(): Sigil {
     return this.queue[0];
+  }
+
+  killSigil(sigil: Sigil): void {
+    this.queue.splice(this.queue.indexOf(sigil), 1);
+
+    sigil.die();
   }
 
   private getDollarRecognized(path: paper.Path): number {
@@ -60,11 +66,11 @@ export class SigilQueue {
   handleDrawnLine(drawnLine: paper.Path): void {
     const result = this.getDollarRecognized(drawnLine);
     if (this.currentSigil.handleDrawResult(result) < 0) {
-      this.queue.shift()?.die();
+      killSigil(this.currentSigil);
     }
   }
 
-  onFrame(): void {
+  onFrame(event: OnFrameEvent): void {
     if (this.guessText?.opacity > 0) {
       this.guessText.opacity *= 0.9;
       if (typeof this.guessText.fontSize === 'number') {
@@ -86,8 +92,8 @@ export class SigilQueue {
 
     if (this.queue.length) {
       this.queue.forEach((sigil, i) => {
-        if (i === 1) {
-          sigil.step();
+        if (i === 0) {
+          sigil.step(event);
         }
       });
     }
